@@ -10,6 +10,26 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
   final TextEditingController waistC;
   final TextEditingController hipC;
 
+  final String? skinTone;
+  final String? faceShape;
+  final String? eyeColor;
+  final String? hairColor;
+  final String? hairStyle;
+
+  final List<String> skinToneOptions;
+  final List<String> faceShapeOptions;
+  final List<String> eyeColorOptions;
+  final List<String> hairColorOptions;
+  final List<String> hairStyleOptions;
+
+  final bool showHairFields;
+
+  final ValueChanged<String?> onSkinToneChanged;
+  final ValueChanged<String?> onFaceShapeChanged;
+  final ValueChanged<String?> onEyeColorChanged;
+  final ValueChanged<String?> onHairColorChanged;
+  final ValueChanged<String?> onHairStyleChanged;
+
   const OnboardingAvatarMeasurementsCard({
     super.key,
     required this.heightC,
@@ -17,13 +37,29 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
     required this.chestC,
     required this.waistC,
     required this.hipC,
+    required this.skinTone,
+    required this.faceShape,
+    required this.eyeColor,
+    required this.hairColor,
+    required this.hairStyle,
+    required this.skinToneOptions,
+    required this.faceShapeOptions,
+    required this.eyeColorOptions,
+    required this.hairColorOptions,
+    required this.hairStyleOptions,
+    required this.showHairFields,
+    required this.onSkinToneChanged,
+    required this.onFaceShapeChanged,
+    required this.onEyeColorChanged,
+    required this.onHairColorChanged,
+    required this.onHairStyleChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return _GlassCard(
-      title: 'Vücut Ölçüleri',
-      subtitle: 'En az boy ve kilo girmeniz yeterli',
+      title: 'Avatar Profili',
+      subtitle: 'En az boy, kilo ve temel görünüş özelliklerini girmeniz yeterli',
       child: Column(
         children: [
           LayoutBuilder(
@@ -33,9 +69,17 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
               if (isNarrow) {
                 return Column(
                   children: [
-                    OnboardingAvatarNumberField(label: 'Boy (cm)', controller: heightC, hint: '170'),
+                    OnboardingAvatarNumberField(
+                      label: 'Boy (cm)',
+                      controller: heightC,
+                      hint: '170',
+                    ),
                     const SizedBox(height: 12),
-                    OnboardingAvatarNumberField(label: 'Kilo (kg)', controller: weightC, hint: '70'),
+                    OnboardingAvatarNumberField(
+                      label: 'Kilo (kg)',
+                      controller: weightC,
+                      hint: '70',
+                    ),
                   ],
                 );
               }
@@ -62,7 +106,6 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
-
           LayoutBuilder(
             builder: (context, c) {
               final isNarrow = c.maxWidth < 360;
@@ -70,9 +113,17 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
               if (isNarrow) {
                 return Column(
                   children: [
-                    OnboardingAvatarNumberField(label: 'Göğüs (cm)', controller: chestC, hint: '90'),
+                    OnboardingAvatarNumberField(
+                      label: 'Göğüs (cm)',
+                      controller: chestC,
+                      hint: '90',
+                    ),
                     const SizedBox(height: 12),
-                    OnboardingAvatarNumberField(label: 'Bel (cm)', controller: waistC, hint: '75'),
+                    OnboardingAvatarNumberField(
+                      label: 'Bel (cm)',
+                      controller: waistC,
+                      hint: '75',
+                    ),
                   ],
                 );
               }
@@ -98,17 +149,112 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
               );
             },
           ),
-
           const SizedBox(height: 12),
-
-          // Kalça
           OnboardingAvatarNumberField(
             label: 'Kalça (cm)',
             controller: hipC,
             hint: '95',
           ),
+          const SizedBox(height: 18),
+          _AvatarDropdownField(
+            label: 'Ten Tonu',
+            value: skinTone,
+            items: skinToneOptions,
+            onChanged: onSkinToneChanged,
+          ),
+          const SizedBox(height: 12),
+          _AvatarDropdownField(
+            label: 'Yüz Şekli',
+            value: faceShape,
+            items: faceShapeOptions,
+            onChanged: onFaceShapeChanged,
+          ),
+          const SizedBox(height: 12),
+          _AvatarDropdownField(
+            label: 'Göz Rengi',
+            value: eyeColor,
+            items: eyeColorOptions,
+            onChanged: onEyeColorChanged,
+          ),
+          if (showHairFields) ...[
+            const SizedBox(height: 12),
+            _AvatarDropdownField(
+              label: 'Saç Rengi',
+              value: hairColor,
+              items: hairColorOptions,
+              onChanged: onHairColorChanged,
+            ),
+            const SizedBox(height: 12),
+            _AvatarDropdownField(
+              label: 'Saç Tipi',
+              value: hairStyle,
+              items: hairStyleOptions,
+              onChanged: onHairStyleChanged,
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _AvatarDropdownField extends StatelessWidget {
+  final String label;
+  final String? value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  const _AvatarDropdownField({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF6B675F),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x66B4A193)),
+              ),
+              child: DropdownButtonFormField<String>(
+                value: value,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                ),
+                hint: Text(label),
+                items: items
+                    .map(
+                      (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item),
+                  ),
+                )
+                    .toList(),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -118,7 +264,11 @@ class _GlassCard extends StatelessWidget {
   final String subtitle;
   final Widget child;
 
-  const _GlassCard({required this.title, required this.subtitle, required this.child});
+  const _GlassCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +295,13 @@ class _GlassCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(subtitle, style: const TextStyle(color: Color(0xFF6B675F), height: 1.35)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF6B675F),
+                  height: 1.35,
+                ),
+              ),
               const SizedBox(height: 14),
               child,
             ],

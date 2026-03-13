@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "74532789734",
+    "project_id": "akilligardirobum",
+    "storage_bucket": "akilligardirobum.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:74532789734:android:26cf2e546d8e41e8cf8a27",
+        "android_client_info": {
+          "package_name": "com.example.kombinim_cepte"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf_FdrzVlHbUPWKcpP6U94qpisvyrw06Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

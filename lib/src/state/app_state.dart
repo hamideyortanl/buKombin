@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/firebase_auth_service.dart';
+import '../services/user_profile_service.dart';
 import '../core/models/weather_now.dart';
 import '../core/services/location_service.dart';
 import '../core/services/weather_service.dart';
@@ -12,7 +14,8 @@ class AppState extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final WeatherService _weatherService = WeatherService();
   final LocationService _locationService = LocationService();
-
+  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
+  final UserProfileService _userProfileService = UserProfileService();
   late SharedPreferences _prefs;
 
   final List<Account> _accounts = [];
@@ -82,33 +85,81 @@ class AppState extends ChangeNotifier {
     required String email,
     required String password,
     required bool isFamilyAccount,
+    String? fullName,
+    String? gender,
+    String? femaleMode,
   }) async {
-    if (_accounts.any((a) => a.username == username)) return 'Kullanıcı adı dolu.';
-    if (_accounts.any((a) => a.email == email)) return 'E-posta dolu.';
+    if (_accounts.any((a) => a.username == username)) {
+      return 'Kullanıcı adı dolu.';
+    }
 
-    final newAccount = Account(
-      username: username,
-      email: email,
-      salt: PasswordHasher.generateSalt(),
-      passwordHash: '',
-      isFamilyAccount: isFamilyAccount,
-    );
+    if (_accounts.any((a) => a.email == email)) {
+      return 'E-posta dolu.';
+    }
 
-    final hashed = PasswordHasher.hash(password, newAccount.salt);
-    final secureAccount = Account(
-      username: newAccount.username,
-      email: newAccount.email,
-      salt: newAccount.salt,
-      passwordHash: hashed,
-      isFamilyAccount: newAccount.isFamilyAccount,
-    );
+    try {
+      final credential = await _firebaseAuthService.register(
+        email: email.trim(),
+        password: password,
+      );
 
-    await _authService.saveAccount(_prefs, _accounts, secureAccount);
+      final firebaseUser = credential.user;
+      if (firebaseUser == null) {
+        return 'Kullanıcı hesabı oluşturulamadı.';
+      }
 
-    _current = secureAccount;
-    await _authService.persistSession(_prefs, username);
-    notifyListeners();
-    return null;
+      try {
+        await _userProfileService.createUserProfile(
+          uid: firebaseUser.uid,
+          username: username,
+          email: email,
+          fullName: fullName,
+          gender: gender,
+          femaleMode: femaleMode,
+          isFamilyAccount: isFamilyAccount,
+        );
+      } catch (_) {
+        try {
+          await firebaseUser.delete();
+        } catch (_) {}
+        return 'Profil verisi kaydedilemedi. Lütfen tekrar deneyin.';
+      }
+
+      // Geçici köprü:
+      // Login ekranın henüz local sistemle çalıştığı için
+      // bu hesabı şimdilik local'e de kaydediyoruz.
+      final salt = PasswordHasher.generateSalt();
+      final hashed = PasswordHasher.hash(password, salt);
+
+      final secureAccount = Account(
+        username: username.trim(),
+        email: email.trim(),
+        salt: salt,
+        passwordHash: hashed,
+        isFamilyAccount: isFamilyAccount,
+      );
+
+      await _authService.saveAccount(_prefs, _accounts, secureAccount);
+
+      _current = secureAccount;
+      await _authService.persistSession(_prefs, secureAccount.username);
+
+      notifyListeners();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'email-already-in-use':
+          return 'Bu e-posta zaten kullanımda.';
+        case 'invalid-email':
+          return 'Geçerli bir e-posta adresi girin.';
+        case 'weak-password':
+          return 'Şifre çok zayıf.';
+        default:
+          return e.message ?? 'Kayıt sırasında hata oluştu.';
+      }
+    } catch (_) {
+      return 'Kayıt sırasında beklenmeyen bir hata oluştu.';
+    }
   }
 
   Future<String?> login({required String username, required String password}) async {

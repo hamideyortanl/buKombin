@@ -72,10 +72,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     // YENİ APPSTATE YAPISINA UYGUN ÇAĞRI
     final err = await state.register(
-        username: u,
-        email: e,
-        password: p,
-        isFamilyAccount: _isFamily
+      username: u,
+      email: e,
+      password: p,
+      isFamilyAccount: _isFamily,
+      fullName: _fullNameC.text.trim().isEmpty ? null : _fullNameC.text.trim(),
+      gender: _gender,
+      femaleMode: _femaleMode,
     );
 
     if (!mounted) return;

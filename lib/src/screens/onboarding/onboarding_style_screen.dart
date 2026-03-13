@@ -12,8 +12,9 @@ import 'widgets/style/onboarding_style_palette_row.dart';
 import 'widgets/style/onboarding_style_responsive_grid.dart';
 import 'widgets/style/onboarding_style_section_text.dart';
 import 'widgets/style/onboarding_style_select_card.dart';
-
 import 'widgets/style/onboarding_icon_assets.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/user_profile_service.dart';
 
 class OnboardingStyleScreen extends StatefulWidget {
   final String? gender; // 'female' | 'male'
@@ -29,10 +30,12 @@ class OnboardingStyleScreen extends StatefulWidget {
 }
 
 class _OnboardingStyleScreenState extends State<OnboardingStyleScreen> {
+  final UserProfileService _userProfileService = UserProfileService();
   final Set<String> _styles = {};
   final Set<String> _events = {};
   final Set<int> _selectedPalettes = {};
   String? _error;
+  bool _isSaving = false;
 
   static final List<String> _styleOptions = [
     'Klasik',
@@ -121,7 +124,7 @@ class _OnboardingStyleScreenState extends State<OnboardingStyleScreen> {
     });
   }
 
-  void _next() {
+  Future<void> _next() async {
     setState(() => _error = null);
 
     if (!_canContinue) {
@@ -129,14 +132,45 @@ class _OnboardingStyleScreenState extends State<OnboardingStyleScreen> {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OnboardingAvatarScreen(
-          gender: widget.gender,
-          femaleMode: widget.femaleMode,
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) {
+      setState(() => _error = 'Oturum bulunamadı. Lütfen tekrar giriş yapın.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await _userProfileService.updateUserProfile(
+        uid: firebaseUser.uid,
+        data: {
+          'stylePreferences': {
+            'styles': _styles.toList(),
+            'events': _events.toList(),
+            'paletteIndexes': _selectedPalettes.toList()..sort(),
+          },
+        },
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OnboardingAvatarScreen(
+            gender: widget.gender,
+            femaleMode: widget.femaleMode,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      setState(() {
+        _error = 'Stil tercihleri kaydedilemedi. Lütfen tekrar deneyin.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   @override
@@ -307,9 +341,13 @@ class _OnboardingStyleScreenState extends State<OnboardingStyleScreen> {
                           right: 0,
                           bottom: 0,
                           child: OnboardingStyleFooter(
-                            enabled: _canContinue,
-                            onTap: _next,
-                          ),
+                          enabled: _canContinue && !_isSaving,
+                          onTap: () {
+                            if (!_isSaving) {
+                              _next();
+                            }
+                          },
+                        ),
                         ),
                       ],
                     ),

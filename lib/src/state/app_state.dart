@@ -1,47 +1,48 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/firebase_auth_service.dart';
-import '../services/user_profile_service.dart';
-import '../core/models/weather_now.dart';
-import '../core/services/location_service.dart';
-import '../core/services/weather_service.dart';
+
 import '../models/account.dart';
+import '../models/weather_model.dart';
 import '../services/auth_service.dart';
+import '../services/weather_service.dart';
 import '../utils/password_hasher.dart';
 
 class AppState extends ChangeNotifier {
+  // Servisler (İşçiler)
   final AuthService _authService = AuthService();
   final WeatherService _weatherService = WeatherService();
-  final LocationService _locationService = LocationService();
-  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
-  final UserProfileService _userProfileService = UserProfileService();
+
   late SharedPreferences _prefs;
 
+  // State Verileri (Hafıza)
   final List<Account> _accounts = [];
   Account? _current;
 
-  WeatherNow? _weather;
+  // Hava Durumu Verileri
+  WeatherModel? _weather;
   bool _isWeatherLoading = false;
   String? _weatherError;
 
   bool _initialized = false;
 
+  // Getter'lar (Dışarıya bilgi verme)
   bool get isInitialized => _initialized;
   bool get isLoggedIn => _current != null;
   Account? get current => _current;
 
-  WeatherNow? get weather => _weather;
-  WeatherNow? get currentWeather => _weather;
+  WeatherModel? get weather => _weather;
   bool get isWeatherLoading => _isWeatherLoading;
   String? get weatherError => _weatherError;
 
+  // Uygulama açılışında çalışır
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
 
+    // AuthService'den hesapları yükle
     final loadedAccounts = await _authService.loadAccounts(_prefs);
     _accounts.addAll(loadedAccounts);
 
+    // Oturum kontrolü
     _restoreSession();
 
     _initialized = true;
@@ -51,6 +52,7 @@ class AppState extends ChangeNotifier {
   void _restoreSession() {
     final username = _authService.getSessionUser(_prefs);
     if (username != null) {
+      // Güvenli geri yükleme: hesap bulunamazsa oturum temizlenir.
       final match = _accounts.where((a) => a.username == username).toList();
       if (match.isEmpty) {
         _authService.clearSession(_prefs);
@@ -58,20 +60,21 @@ class AppState extends ChangeNotifier {
       } else {
         _current = match.first;
       }
+      // Kullanıcı giriş yaptıysa, hemen hava durumunu da çekelim mi?
+      // İstersen burada fetchWeather('Istanbul') diyebilirsin.
     }
   }
 
-  Future<void> refreshWeather() async {
+  // --- HAVA DURUMU İŞLEMLERİ ---
+
+  Future<void> fetchWeather(String cityName) async {
     _isWeatherLoading = true;
     _weatherError = null;
     notifyListeners();
 
     try {
-      final position = await _locationService.getCurrentPosition();
-      _weather = await _weatherService.fetchCurrentWeather(
-        lat: position.latitude,
-        lon: position.longitude,
-      );
+      // WeatherService işi yapıyor
+      _weather = await _weatherService.getWeather(cityName);
     } catch (e) {
       _weatherError = e.toString();
     } finally {
@@ -80,94 +83,55 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // --- KULLANICI İŞLEMLERİ ---
+
   Future<String?> register({
     required String username,
     required String email,
     required String password,
     required bool isFamilyAccount,
-    String? fullName,
-    String? gender,
-    String? femaleMode,
   }) async {
-    if (_accounts.any((a) => a.username == username)) {
-      return 'Kullanıcı adı dolu.';
-    }
+    // Basit validasyonlar
+    if (_accounts.any((a) => a.username == username)) return 'Kullanıcı adı dolu.';
+    if (_accounts.any((a) => a.email == email)) return 'E-posta dolu.';
 
-    if (_accounts.any((a) => a.email == email)) {
-      return 'E-posta dolu.';
-    }
+    final newAccount = Account(
+        username: username,
+        email: email,
+        salt: PasswordHasher.generateSalt(),
+        passwordHash: '',
+        isFamilyAccount: isFamilyAccount
+    );
 
-    try {
-      final credential = await _firebaseAuthService.register(
-        email: email.trim(),
-        password: password,
-      );
+    // Şifreyi düz metin saklamıyoruz: salt + sha256.
+    final hashed = PasswordHasher.hash(password, newAccount.salt);
+    final secureAccount = Account(
+      username: newAccount.username,
+      email: newAccount.email,
+      salt: newAccount.salt,
+      passwordHash: hashed,
+      isFamilyAccount: newAccount.isFamilyAccount,
+    );
 
-      final firebaseUser = credential.user;
-      if (firebaseUser == null) {
-        return 'Kullanıcı hesabı oluşturulamadı.';
-      }
+    // AuthService işi yapıyor
+    await _authService.saveAccount(_prefs, _accounts, secureAccount);
 
-      try {
-        await _userProfileService.createUserProfile(
-          uid: firebaseUser.uid,
-          username: username,
-          email: email,
-          fullName: fullName,
-          gender: gender,
-          femaleMode: femaleMode,
-          isFamilyAccount: isFamilyAccount,
-        );
-      } catch (_) {
-        try {
-          await firebaseUser.delete();
-        } catch (_) {}
-        return 'Profil verisi kaydedilemedi. Lütfen tekrar deneyin.';
-      }
+    // Otomatik giriş yap
+    _current = secureAccount;
+    await _authService.persistSession(_prefs, username);
 
-      // Geçici köprü:
-      // Login ekranın henüz local sistemle çalıştığı için
-      // bu hesabı şimdilik local'e de kaydediyoruz.
-      final salt = PasswordHasher.generateSalt();
-      final hashed = PasswordHasher.hash(password, salt);
-
-      final secureAccount = Account(
-        username: username.trim(),
-        email: email.trim(),
-        salt: salt,
-        passwordHash: hashed,
-        isFamilyAccount: isFamilyAccount,
-      );
-
-      await _authService.saveAccount(_prefs, _accounts, secureAccount);
-
-      _current = secureAccount;
-      await _authService.persistSession(_prefs, secureAccount.username);
-
-      notifyListeners();
-      return null;
-    } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case 'email-already-in-use':
-          return 'Bu e-posta zaten kullanımda.';
-        case 'invalid-email':
-          return 'Geçerli bir e-posta adresi girin.';
-        case 'weak-password':
-          return 'Şifre çok zayıf.';
-        default:
-          return e.message ?? 'Kayıt sırasında hata oluştu.';
-      }
-    } catch (_) {
-      return 'Kayıt sırasında beklenmeyen bir hata oluştu.';
-    }
+    notifyListeners();
+    return null;
   }
 
   Future<String?> login({required String username, required String password}) async {
     try {
       final candidate = _accounts.firstWhere(
-            (a) => (a.username == username || a.email == username),
+        (a) => (a.username == username || a.email == username),
       );
 
+      // Eski hesaplarda salt boş olabilir (eski format). Bu durumda giriş güvenli değil;
+      // kullanıcıdan yeniden kayıt olması istenebilir. Şimdilik: salt yoksa giriş başarısız.
       if (candidate.salt.trim().isEmpty || candidate.passwordHash.trim().isEmpty) {
         return 'Güvenlik güncellemesi nedeniyle lütfen yeniden kayıt olun.';
       }
@@ -188,8 +152,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> logout() async {
     _current = null;
-    _weather = null;
-    _weatherError = null;
+    _weather = null; // Çıkış yapınca hava durumu da sıfırlansın
     await _authService.clearSession(_prefs);
     notifyListeners();
   }

@@ -49,7 +49,8 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
   String? _faceShape;
   String? _eyeColor;
   String? _hairColor;
-  String? _hairStyle;
+  String? _hairTexture;
+  String? _hairLength;
 
   static const List<String> _skinToneOptions = [
     'Açık',
@@ -82,11 +83,15 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
     'Kızıl',
   ];
 
-  static const List<String> _hairStyleOptions = [
+  static const List<String> _hairTextureOptions = [
     'Düz',
     'Dalgalı',
     'Kıvırcık',
+  ];
+
+  static const List<String> _hairLengthOptions = [
     'Kısa',
+    'Orta',
     'Uzun',
     'Toplu',
   ];
@@ -134,7 +139,10 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
 
     if (_isClosedMode) return hasBaseFields;
 
-    return hasBaseFields && _hairColor != null && _hairStyle != null;
+    return hasBaseFields &&
+        _hairColor != null &&
+        _hairTexture != null &&
+        _hairLength != null;
   }
 
   Future<void> _pickImage() async {
@@ -215,16 +223,20 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
       return;
     }
 
-    if (!_isClosedMode && (_hairColor == null || _hairStyle == null)) {
-      setState(() => _error = 'Lütfen saç rengi ve saç tipini seçiniz.');
+    if (!_isClosedMode &&
+        (_hairColor == null || _hairTexture == null || _hairLength == null)) {
+      setState(() => _error = 'Lütfen saç rengi, dokusu ve uzunluğunu seçiniz.');
       return;
     }
 
     final height = int.tryParse(_heightC.text.trim());
     final weight = int.tryParse(_weightC.text.trim());
-    final chest = _chestC.text.trim().isEmpty ? null : int.tryParse(_chestC.text.trim());
-    final waist = _waistC.text.trim().isEmpty ? null : int.tryParse(_waistC.text.trim());
-    final hips = _hipC.text.trim().isEmpty ? null : int.tryParse(_hipC.text.trim());
+    final chest =
+    _chestC.text.trim().isEmpty ? null : int.tryParse(_chestC.text.trim());
+    final waist =
+    _waistC.text.trim().isEmpty ? null : int.tryParse(_waistC.text.trim());
+    final hips =
+    _hipC.text.trim().isEmpty ? null : int.tryParse(_hipC.text.trim());
 
     setState(() => _isSaving = true);
 
@@ -242,7 +254,8 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
             'faceShape': _faceShape,
             'eyeColor': _eyeColor,
             'hairColor': _isClosedMode ? null : _hairColor,
-            'hairStyle': _isClosedMode ? null : _hairStyle,
+            'hairTexture': _isClosedMode ? null : _hairTexture,
+            'hairLength': _isClosedMode ? null : _hairLength,
             'photoName': _imageName,
             'hasUploadedPhoto': _hasImage,
           },
@@ -346,18 +359,21 @@ class _OnboardingAvatarScreenState extends State<OnboardingAvatarScreen> {
                           faceShape: _faceShape,
                           eyeColor: _eyeColor,
                           hairColor: _hairColor,
-                          hairStyle: _hairStyle,
+                          hairTexture: _hairTexture,
+                          hairLength: _hairLength,
                           skinToneOptions: _skinToneOptions,
                           faceShapeOptions: _faceShapeOptions,
                           eyeColorOptions: _eyeColorOptions,
                           hairColorOptions: _hairColorOptions,
-                          hairStyleOptions: _hairStyleOptions,
+                          hairTextureOptions: _hairTextureOptions,
+                          hairLengthOptions: _hairLengthOptions,
                           showHairFields: !_isClosedMode,
                           onSkinToneChanged: (v) => setState(() => _skinTone = v),
                           onFaceShapeChanged: (v) => setState(() => _faceShape = v),
                           onEyeColorChanged: (v) => setState(() => _eyeColor = v),
                           onHairColorChanged: (v) => setState(() => _hairColor = v),
-                          onHairStyleChanged: (v) => setState(() => _hairStyle = v),
+                          onHairTextureChanged: (v) => setState(() => _hairTexture = v),
+                          onHairLengthChanged: (v) => setState(() => _hairLength = v),
                         ),
                         const SizedBox(height: 6),
                       ],

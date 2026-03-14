@@ -7,7 +7,6 @@ import '../home/root_shell.dart';
 
 import 'widgets/auth_header_back.dart';
 import 'widgets/login/login_form.dart';
-import '../../utils/email_validator.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,30 +35,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final key = _userController.text.trim();
     final pass = _passController.text;
 
-    // --- GÜVENLİK DUVARI 1: Boşluk Kontrolü ---
     if (key.isEmpty || pass.isEmpty) {
       setState(() => _error = 'Lütfen tüm alanları doldurun.');
       return;
     }
 
-    // --- GÜVENLİK DUVARI 2: Gelişmiş E-posta/Kullanıcı Adı Kontrolü ---
-    if (key.contains('@')) {
-      // E-posta formatı kontrolü (Basit ama etkili Regex)
-      final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
-      if (!emailRegex.hasMatch(key)) {
-        setState(() => _error = 'Lütfen geçerli bir e-posta adresi girin.');
-        return;
-      }
-    } else {
-      // Kullanıcı adı kontrolü (Sadece harf ve rakam, sembol yok)
-      if (!RegExp(r'^[A-Za-z0-9]+$').hasMatch(key)) {
-        setState(() => _error = 'Geçersiz kullanıcı adı formatı.');
-        return;
-      }
-    }
-
-    // --- GÜVENLİ İLETİŞİM ---
-    // Şifre ASLA print edilmez, doğrudan AppState'e (oradan da Backend'e) gönderilir.
     final err = await state.login(username: key, password: pass);
 
     if (err != null && mounted) {
@@ -67,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Başarılıysa yönlendir
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootShell()),
@@ -78,7 +57,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(      body: SafeArea(
+    return Scaffold(
+      body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final maxWidth = 480.0;
@@ -103,16 +83,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               errorText: _error,
                               onTogglePass: () => setState(() => _showPass = !_showPass),
                               onForgotPass: () => ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Şifre sıfırlama ekranına gidiliyor...')),
+                                const SnackBar(
+                                  content: Text('Şifre sıfırlama ekranı daha sonra eklenecek.'),
+                                ),
                               ),
                               onLogin: _login,
                               onGoogle: () => ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Google ile giriş tetiklendi')),
+                                const SnackBar(content: Text('Google ile giriş henüz aktif değil')),
                               ),
                               onFacebook: () => ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Facebook ile giriş tetiklendi')),
+                                const SnackBar(content: Text('Facebook ile giriş henüz aktif değil')),
                               ),
-                              onGoRegister: () => Navigator.of(context).pushReplacement( // Geri dönüş yığınını temiz tutmak için pushReplacement
+                              onGoRegister: () => Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(builder: (_) => const RegisterScreen()),
                               ),
                             ),

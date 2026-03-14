@@ -14,13 +14,15 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
   final String? faceShape;
   final String? eyeColor;
   final String? hairColor;
-  final String? hairStyle;
+  final String? hairTexture;
+  final String? hairLength;
 
   final List<String> skinToneOptions;
   final List<String> faceShapeOptions;
   final List<String> eyeColorOptions;
   final List<String> hairColorOptions;
-  final List<String> hairStyleOptions;
+  final List<String> hairTextureOptions;
+  final List<String> hairLengthOptions;
 
   final bool showHairFields;
 
@@ -28,7 +30,8 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
   final ValueChanged<String?> onFaceShapeChanged;
   final ValueChanged<String?> onEyeColorChanged;
   final ValueChanged<String?> onHairColorChanged;
-  final ValueChanged<String?> onHairStyleChanged;
+  final ValueChanged<String?> onHairTextureChanged;
+  final ValueChanged<String?> onHairLengthChanged;
 
   const OnboardingAvatarMeasurementsCard({
     super.key,
@@ -41,18 +44,21 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
     required this.faceShape,
     required this.eyeColor,
     required this.hairColor,
-    required this.hairStyle,
+    required this.hairTexture,
+    required this.hairLength,
     required this.skinToneOptions,
     required this.faceShapeOptions,
     required this.eyeColorOptions,
     required this.hairColorOptions,
-    required this.hairStyleOptions,
+    required this.hairTextureOptions,
+    required this.hairLengthOptions,
     required this.showHairFields,
     required this.onSkinToneChanged,
     required this.onFaceShapeChanged,
     required this.onEyeColorChanged,
     required this.onHairColorChanged,
-    required this.onHairStyleChanged,
+    required this.onHairTextureChanged,
+    required this.onHairLengthChanged,
   });
 
   @override
@@ -186,10 +192,17 @@ class OnboardingAvatarMeasurementsCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _AvatarDropdownField(
-              label: 'Saç Tipi',
-              value: hairStyle,
-              items: hairStyleOptions,
-              onChanged: onHairStyleChanged,
+              label: 'Saç Dokusu',
+              value: hairTexture,
+              items: hairTextureOptions,
+              onChanged: onHairTextureChanged,
+            ),
+            const SizedBox(height: 12),
+            _AvatarDropdownField(
+              label: 'Saç Uzunluğu',
+              value: hairLength,
+              items: hairLengthOptions,
+              onChanged: onHairLengthChanged,
             ),
           ],
         ],

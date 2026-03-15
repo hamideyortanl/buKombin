@@ -2,20 +2,27 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../models/clothing_item.dart';
+import '../../../models/clothing_item.dart';
 import '../wardrobe_palette.dart';
 
 class WardrobeItemCard extends StatelessWidget {
   final ClothingItem item;
   final bool showOwner;
 
-  const WardrobeItemCard({super.key, required this.item, required this.showOwner});
+  const WardrobeItemCard({
+    super.key,
+    required this.item,
+    required this.showOwner,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final displayColor = _colorFromName(item.colorName);
+
     return InkWell(
-      onTap: () => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${item.name} detayı (demo)'))),
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${item.name} detayı (şimdilik demo)')),
+      ),
       borderRadius: BorderRadius.circular(20),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -31,7 +38,7 @@ class WardrobeItemCard extends StatelessWidget {
                   color: WardrobePalette.textBrown.withOpacity(0.10),
                   blurRadius: 18,
                   offset: const Offset(0, 10),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -40,12 +47,16 @@ class WardrobeItemCard extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(gradient: WardrobePalette.tileGradient),
+                    decoration: const BoxDecoration(
+                      gradient: WardrobePalette.tileGradient,
+                    ),
                     child: Center(
                       child: Icon(
-                        item.category == 'Ayakkabı' ? Icons.directions_walk : Icons.checkroom,
+                        item.category == 'Ayakkabı'
+                            ? Icons.directions_walk
+                            : Icons.checkroom,
                         size: 44,
-                        color: item.color.withOpacity(0.95),
+                        color: displayColor.withOpacity(0.95),
                       ),
                     ),
                   ),
@@ -65,10 +76,21 @@ class WardrobeItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(item.category, style: const TextStyle(color: WardrobePalette.muted2)),
+                      Text(
+                        item.category,
+                        style: const TextStyle(color: WardrobePalette.muted2),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.colorName,
+                        style: const TextStyle(color: WardrobePalette.muted2),
+                      ),
                       if (showOwner) ...[
                         const SizedBox(height: 6),
-                        Text('Sahip: ${item.owner}', style: const TextStyle(color: WardrobePalette.muted2)),
+                        Text(
+                          'Sahip: ${item.ownerName}',
+                          style: const TextStyle(color: WardrobePalette.muted2),
+                        ),
                       ],
                     ],
                   ),
@@ -79,5 +101,43 @@ class WardrobeItemCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _colorFromName(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case 'siyah':
+        return Colors.black87;
+      case 'beyaz':
+        return Colors.white;
+      case 'mavi':
+        return Colors.blue;
+      case 'lacivert':
+        return Colors.indigo;
+      case 'kırmızı':
+      case 'kirmizi':
+        return Colors.red;
+      case 'yeşil':
+      case 'yesil':
+        return Colors.green;
+      case 'gri':
+        return Colors.grey;
+      case 'kahverengi':
+        return Colors.brown;
+      case 'bej':
+        return const Color(0xFFD6C1A3);
+      case 'krem':
+        return const Color(0xFFE8DDD5);
+      case 'pembe':
+        return Colors.pink;
+      case 'mor':
+        return Colors.purple;
+      case 'sarı':
+      case 'sari':
+        return Colors.amber;
+      case 'turuncu':
+        return Colors.orange;
+      default:
+        return WardrobePalette.textBrown;
+    }
   }
 }

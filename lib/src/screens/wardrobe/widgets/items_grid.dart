@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/clothing_item.dart';
+import '../../../models/clothing_item.dart';
 import 'wardrobe_item_card.dart';
 
 class ItemsGrid extends StatelessWidget {

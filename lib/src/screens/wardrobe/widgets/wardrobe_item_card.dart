@@ -8,11 +8,13 @@ import '../wardrobe_palette.dart';
 class WardrobeItemCard extends StatelessWidget {
   final ClothingItem item;
   final bool showOwner;
+  final VoidCallback? onTap;
 
   const WardrobeItemCard({
     super.key,
     required this.item,
     required this.showOwner,
+    this.onTap,
   });
 
   @override
@@ -20,9 +22,7 @@ class WardrobeItemCard extends StatelessWidget {
     final displayColor = _colorFromName(item.colorName);
 
     return InkWell(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.name} detayı (şimdilik demo)')),
-      ),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -45,18 +45,18 @@ class WardrobeItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: item.imageUrl.trim().isNotEmpty
+                  child: item.hasImage
                       ? ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                    child: Image.network(
-                      item.imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _fallbackIcon(displayColor),
-                    ),
-                  )
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                          child: Image.network(
+                            item.imageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _fallbackIcon(displayColor),
+                          ),
+                        )
                       : _fallbackIcon(displayColor),
                 ),
                 Padding(
@@ -64,14 +64,29 @@ class WardrobeItemCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: WardrobePalette.textDark,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: WardrobePalette.textDark,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (item.isFavorite)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.favorite_rounded,
+                                size: 16,
+                                color: WardrobePalette.textBrown,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -104,9 +119,7 @@ class WardrobeItemCard extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          item.category == 'Ayakkabı'
-              ? Icons.directions_walk
-              : Icons.checkroom,
+          item.category == 'Ayakkabı' ? Icons.directions_walk : Icons.checkroom,
           size: 44,
           color: displayColor.withOpacity(0.95),
         ),

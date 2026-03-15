@@ -6,8 +6,14 @@ import 'wardrobe_item_row.dart';
 class ItemsList extends StatelessWidget {
   final List<ClothingItem> items;
   final bool showOwner;
+  final ValueChanged<ClothingItem>? onItemTap;
 
-  const ItemsList({super.key, required this.items, required this.showOwner});
+  const ItemsList({
+    super.key,
+    required this.items,
+    required this.showOwner,
+    this.onItemTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,11 @@ class ItemsList extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) => WardrobeItemRow(item: items[i], showOwner: showOwner),
+      itemBuilder: (_, i) => WardrobeItemRow(
+        item: items[i],
+        showOwner: showOwner,
+        onTap: () => onItemTap?.call(items[i]),
+      ),
     );
   }
 }

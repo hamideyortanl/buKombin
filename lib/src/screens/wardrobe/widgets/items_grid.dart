@@ -6,8 +6,14 @@ import 'wardrobe_item_card.dart';
 class ItemsGrid extends StatelessWidget {
   final List<ClothingItem> items;
   final bool showOwner;
+  final ValueChanged<ClothingItem>? onItemTap;
 
-  const ItemsGrid({super.key, required this.items, required this.showOwner});
+  const ItemsGrid({
+    super.key,
+    required this.items,
+    required this.showOwner,
+    this.onItemTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +27,11 @@ class ItemsGrid extends StatelessWidget {
         crossAxisSpacing: 14,
         childAspectRatio: 0.86,
       ),
-      itemBuilder: (_, i) => WardrobeItemCard(item: items[i], showOwner: showOwner),
+      itemBuilder: (_, i) => WardrobeItemCard(
+        item: items[i],
+        showOwner: showOwner,
+        onTap: () => onItemTap?.call(items[i]),
+      ),
     );
   }
 }

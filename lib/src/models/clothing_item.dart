@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+const Object _unset = Object();
+
 enum ClothingOwnerType {
   self,
   familyMember,
@@ -85,6 +87,9 @@ class ClothingItem {
   bool get hasSeason => season != null && season!.trim().isNotEmpty;
   bool get hasCareInstructions =>
       careInstructions != null && careInstructions!.trim().isNotEmpty;
+  bool get hasImage => imageUrl.trim().isNotEmpty;
+  bool get isMine => ownerType == ClothingOwnerType.self && !isShared;
+  bool get isSharedItem => isShared || ownerType == ClothingOwnerType.shared;
 
   String get ownerTypeValue => ownerType.value;
 
@@ -184,14 +189,14 @@ class ClothingItem {
     bool? isShared,
     DateTime? createdAt,
     DateTime? updatedAt,
-    String? season,
-    String? material,
-    String? brand,
-    String? notes,
+    Object? season = _unset,
+    Object? material = _unset,
+    Object? brand = _unset,
+    Object? notes = _unset,
     List<String>? tags,
     int? usageCount,
-    DateTime? lastWornAt,
-    String? careInstructions,
+    Object? lastWornAt = _unset,
+    Object? careInstructions = _unset,
     bool? isFavorite,
   }) {
     return ClothingItem(
@@ -208,14 +213,18 @@ class ClothingItem {
       isShared: isShared ?? this.isShared,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      season: season ?? this.season,
-      material: material ?? this.material,
-      brand: brand ?? this.brand,
-      notes: notes ?? this.notes,
+      season: identical(season, _unset) ? this.season : season as String?,
+      material: identical(material, _unset) ? this.material : material as String?,
+      brand: identical(brand, _unset) ? this.brand : brand as String?,
+      notes: identical(notes, _unset) ? this.notes : notes as String?,
       tags: tags ?? this.tags,
       usageCount: usageCount ?? this.usageCount,
-      lastWornAt: lastWornAt ?? this.lastWornAt,
-      careInstructions: careInstructions ?? this.careInstructions,
+      lastWornAt: identical(lastWornAt, _unset)
+          ? this.lastWornAt
+          : lastWornAt as DateTime?,
+      careInstructions: identical(careInstructions, _unset)
+          ? this.careInstructions
+          : careInstructions as String?,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }

@@ -9,11 +9,13 @@ import 'wardrobe_tag.dart';
 class WardrobeItemRow extends StatelessWidget {
   final ClothingItem item;
   final bool showOwner;
+  final VoidCallback? onTap;
 
   const WardrobeItemRow({
     super.key,
     required this.item,
     required this.showOwner,
+    this.onTap,
   });
 
   @override
@@ -21,9 +23,7 @@ class WardrobeItemRow extends StatelessWidget {
     final displayColor = _colorFromName(item.colorName);
 
     return InkWell(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.name} detayı (şimdilik demo)')),
-      ),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -45,42 +45,57 @@ class WardrobeItemRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     gradient: WardrobePalette.tileGradient,
                   ),
-                  child: item.imageUrl.trim().isNotEmpty
+                  child: item.hasImage
                       ? ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      item.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        item.category == 'Ayakkabı'
-                            ? Icons.directions_walk
-                            : Icons.checkroom,
-                        color: displayColor.withOpacity(0.95),
-                      ),
-                    ),
-                  )
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.network(
+                            item.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              item.category == 'Ayakkabı'
+                                  ? Icons.directions_walk
+                                  : Icons.checkroom,
+                              color: displayColor.withOpacity(0.95),
+                            ),
+                          ),
+                        )
                       : Center(
-                    child: Icon(
-                      item.category == 'Ayakkabı'
-                          ? Icons.directions_walk
-                          : Icons.checkroom,
-                      color: displayColor.withOpacity(0.95),
-                    ),
-                  ),
+                          child: Icon(
+                            item.category == 'Ayakkabı'
+                                ? Icons.directions_walk
+                                : Icons.checkroom,
+                            color: displayColor.withOpacity(0.95),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: WardrobePalette.textDark,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: WardrobePalette.textDark,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (item.isFavorite)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.favorite_rounded,
+                                size: 16,
+                                color: WardrobePalette.textBrown,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Wrap(

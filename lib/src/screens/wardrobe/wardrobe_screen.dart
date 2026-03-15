@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/clothing_item.dart';
 import '../../state/app_state.dart';
 import 'services/wardrobe_service.dart';
+import 'wardrobe_item_detail_screen.dart';
 import 'wardrobe_palette.dart';
 import 'widgets/add_clothing_item_sheet.dart';
 import 'widgets/add_item_button.dart';
@@ -134,11 +135,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                           ItemsGrid(
                             items: filtered,
                             showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
+                            onItemTap: _openItemDetail,
                           )
                         else
                           ItemsList(
                             items: filtered,
                             showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
+                            onItemTap: _openItemDetail,
                           ),
                         const SizedBox(height: 16),
                         AddItemButton(
@@ -178,6 +181,15 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+
+  Future<void> _openItemDetail(ClothingItem item) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WardrobeItemDetailScreen(item: item),
       ),
     );
   }

@@ -193,16 +193,14 @@ class WardrobeService {
     final userDoc = await _firestore.collection('users').doc(uid).get();
     final data = userDoc.data() ?? <String, dynamic>{};
 
-    final username = (data['username'] ?? 'Benim').toString().trim();
     final rawMembers = data['familyMembers'];
-
-    final result = <String>[username.isEmpty ? 'Benim' : username];
+    final result = <String>[];
 
     if (rawMembers is List) {
       for (final member in rawMembers) {
         if (member is Map) {
           final name = (member['name'] ?? '').toString().trim();
-          if (name.isNotEmpty && !result.contains(name)) {
+          if (name.isNotEmpty && !_isMineLabel(name) && !result.contains(name)) {
             result.add(name);
           }
         }
@@ -210,6 +208,14 @@ class WardrobeService {
     }
 
     return result;
+  }
+
+  bool _isMineLabel(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == 'benim' ||
+        normalized == 'ben' ||
+        normalized == 'kendim' ||
+        normalized == 'self';
   }
 
   String _readExtension(String name, String path) {

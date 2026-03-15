@@ -45,21 +45,19 @@ class WardrobeItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: WardrobePalette.tileGradient,
+                  child: item.imageUrl.trim().isNotEmpty
+                      ? ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
                     ),
-                    child: Center(
-                      child: Icon(
-                        item.category == 'Ayakkabı'
-                            ? Icons.directions_walk
-                            : Icons.checkroom,
-                        size: 44,
-                        color: displayColor.withOpacity(0.95),
-                      ),
+                    child: Image.network(
+                      item.imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _fallbackIcon(displayColor),
                     ),
-                  ),
+                  )
+                      : _fallbackIcon(displayColor),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -77,12 +75,7 @@ class WardrobeItemCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item.category,
-                        style: const TextStyle(color: WardrobePalette.muted2),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.colorName,
+                        '${item.category} • ${item.colorName}',
                         style: const TextStyle(color: WardrobePalette.muted2),
                       ),
                       if (showOwner) ...[
@@ -98,6 +91,24 @@ class WardrobeItemCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fallbackIcon(Color displayColor) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: WardrobePalette.tileGradient,
+      ),
+      child: Center(
+        child: Icon(
+          item.category == 'Ayakkabı'
+              ? Icons.directions_walk
+              : Icons.checkroom,
+          size: 44,
+          color: displayColor.withOpacity(0.95),
         ),
       ),
     );

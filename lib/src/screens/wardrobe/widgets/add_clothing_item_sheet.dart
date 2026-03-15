@@ -28,12 +28,12 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
 
   XFile? _selectedImage;
 
-  String _ownerName = 'Benim';
+  String? _ownerName;
   ClothingOwnerType _ownerType = ClothingOwnerType.self;
-  String _category = 'Üst';
-  String _subcategory = 'Günlük';
-  String _colorName = 'Siyah';
-  String _season = 'Dört Mevsim';
+  String? _category;
+  String? _subcategory;
+  String? _colorName;
+  String? _season;
   bool _isShared = false;
 
   bool _isSaving = false;
@@ -87,7 +87,6 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
   @override
   void initState() {
     super.initState();
-    _subcategory = _subcategoryMap[_category]!.first;
     _loadOwners();
   }
 
@@ -105,46 +104,26 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
   Future<void> _loadOwners() async {
     try {
       final owners = await _service.fetchFamilyOwnerNames();
-
       if (!mounted) return;
 
-      final cleaned = owners
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toSet()
-          .toList();
-
-      final normalized = <String>[];
-      for (final name in cleaned) {
-        if (_isMineLabel(name)) {
-          if (!normalized.contains('Benim')) {
-            normalized.add('Benim');
-          }
-        } else {
-          normalized.add(name);
+      final normalized = <String>['Benim'];
+      for (final owner in owners) {
+        final trimmed = owner.trim();
+        if (trimmed.isEmpty) continue;
+        if (_isMineLabel(trimmed)) continue;
+        if (!normalized.contains(trimmed)) {
+          normalized.add(trimmed);
         }
-      }
-
-      if (!normalized.contains('Benim')) {
-        normalized.insert(0, 'Benim');
       }
 
       setState(() {
         _ownerOptions = normalized;
-        if (!_ownerOptions.contains(_ownerName) && !_isShared) {
-          _ownerName = _ownerOptions.first;
-          _ownerType = _ownerName == 'Benim'
-              ? ClothingOwnerType.self
-              : ClothingOwnerType.familyMember;
-        }
         _isLoadingOwners = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _ownerOptions = const ['Benim'];
-        _ownerName = 'Benim';
-        _ownerType = ClothingOwnerType.self;
         _isLoadingOwners = false;
       });
     }
@@ -190,9 +169,7 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
                   const SizedBox(height: 8),
                   const Text(
                     'Fotoğraf seç, temel bilgileri gir ve dolabına kaydet.',
-                    style: TextStyle(
-                      color: WardrobePalette.textMuted,
-                    ),
+                    style: TextStyle(color: WardrobePalette.textMuted),
                   ),
                   const SizedBox(height: 20),
                   _buildImagePickerCard(),
@@ -212,44 +189,42 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
                   _buildDropdown<String>(
                     label: 'Kategori',
                     value: _category,
+                    hint: 'Seçiniz',
                     items: _categories,
                     onChanged: (value) {
-                      if (value == null) return;
                       setState(() {
                         _category = value;
-                        _subcategory = _subcategoryMap[_category]!.first;
+                        _subcategory = null;
                       });
                     },
+                    validator: (value) => value == null ? 'Kategori seçiniz.' : null,
                   ),
                   const SizedBox(height: 14),
                   _buildDropdown<String>(
                     label: 'Alt kategori',
                     value: _subcategory,
-                    items: _subcategoryMap[_category] ?? const [],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _subcategory = value);
-                    },
+                    hint: 'Seçiniz',
+                    items: _category == null ? const [] : (_subcategoryMap[_category] ?? const []),
+                    onChanged: (value) => setState(() => _subcategory = value),
+                    validator: (value) => value == null ? 'Alt kategori seçiniz.' : null,
                   ),
                   const SizedBox(height: 14),
                   _buildDropdown<String>(
                     label: 'Renk',
                     value: _colorName,
+                    hint: 'Seçiniz',
                     items: _colors,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _colorName = value);
-                    },
+                    onChanged: (value) => setState(() => _colorName = value),
+                    validator: (value) => value == null ? 'Renk seçiniz.' : null,
                   ),
                   const SizedBox(height: 14),
                   _buildDropdown<String>(
                     label: 'Sezon',
                     value: _season,
+                    hint: 'Seçiniz',
                     items: _seasons,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _season = value);
-                    },
+                    onChanged: (value) => setState(() => _season = value),
+                    validator: (value) => value == null ? 'Sezon seçiniz.' : null,
                   ),
                   const SizedBox(height: 14),
                   _buildOwnerSection(),
@@ -276,16 +251,11 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
                       setState(() {
                         _isShared = value;
                         if (value) {
-                          _ownerType = ClothingOwnerType.shared;
                           _ownerName = 'Ortak';
+                          _ownerType = ClothingOwnerType.shared;
                         } else {
-                          final fallbackOwner = _ownerOptions.isNotEmpty
-                              ? _ownerOptions.first
-                              : 'Benim';
-                          _ownerName = fallbackOwner;
-                          _ownerType = fallbackOwner == 'Benim'
-                              ? ClothingOwnerType.self
-                              : ClothingOwnerType.familyMember;
+                          _ownerName = null;
+                          _ownerType = ClothingOwnerType.self;
                         }
                       });
                     },
@@ -415,14 +385,12 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
                 child: Image.file(
                   File(_selectedImage!.path),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
-                    return const Center(
-                      child: Text(
-                        'Fotoğraf önizleme yüklenemedi',
-                        style: TextStyle(color: WardrobePalette.textMuted),
-                      ),
-                    );
-                  },
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Text(
+                      'Fotoğraf önizleme yüklenemedi',
+                      style: TextStyle(color: WardrobePalette.textMuted),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -432,8 +400,7 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed:
-                  _isSaving ? null : () => _pickImage(ImageSource.camera),
+                  onPressed: _isSaving ? null : () => _pickImage(ImageSource.camera),
                   icon: const Icon(Icons.photo_camera_outlined),
                   label: const Text('Kamera'),
                 ),
@@ -441,8 +408,7 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed:
-                  _isSaving ? null : () => _pickImage(ImageSource.gallery),
+                  onPressed: _isSaving ? null : () => _pickImage(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library_outlined),
                   label: const Text('Galeri'),
                 ),
@@ -474,22 +440,19 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
           ),
           const SizedBox(height: 12),
           if (_isLoadingOwners)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'Aile üyeleri yükleniyor...',
-                    style: TextStyle(color: WardrobePalette.textMuted),
-                  ),
-                ],
-              ),
+            const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Aile üyeleri yükleniyor...',
+                  style: TextStyle(color: WardrobePalette.textMuted),
+                ),
+              ],
             )
           else if (_isShared)
             Container(
@@ -513,12 +476,11 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
               runSpacing: 8,
               children: _ownerOptions.map((owner) {
                 final selected = _ownerName == owner;
-                return _ownerChip(
-                  label: owner,
+                return ChoiceChip(
+                  label: Text(owner),
                   selected: selected,
-                  onTap: () {
+                  onSelected: (_) {
                     setState(() {
-                      _isShared = false;
                       _ownerName = owner;
                       _ownerType = owner == 'Benim'
                           ? ClothingOwnerType.self
@@ -529,31 +491,6 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
               }).toList(),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _ownerChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      selectedColor: WardrobePalette.textBrown.withOpacity(0.14),
-      backgroundColor: Colors.white,
-      side: BorderSide(
-        color: selected
-            ? WardrobePalette.textBrown
-            : WardrobePalette.borderSoft,
-      ),
-      labelStyle: TextStyle(
-        color: selected
-            ? WardrobePalette.textBrown
-            : WardrobePalette.textDark,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
       ),
     );
   }
@@ -576,7 +513,6 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
         fillColor: Colors.white.withOpacity(0.74),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: WardrobePalette.borderSoft),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -592,20 +528,23 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
 
   Widget _buildDropdown<T>({
     required String label,
-    required T value,
+    required T? value,
+    required String hint,
     required List<T> items,
     required ValueChanged<T?> onChanged,
+    String? Function(T?)? validator,
   }) {
     return DropdownButtonFormField<T>(
       value: value,
       onChanged: onChanged,
+      validator: validator,
+      hint: Text(hint),
       decoration: InputDecoration(
         labelText: label,
         filled: true,
         fillColor: Colors.white.withOpacity(0.74),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: WardrobePalette.borderSoft),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -635,7 +574,6 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
     );
 
     if (picked == null) return;
-
     setState(() => _selectedImage = picked);
   }
 
@@ -647,6 +585,13 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
       return;
     }
 
+    if (!_isShared && _ownerName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen ürünün kime ait olduğunu seç.')),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
@@ -654,12 +599,12 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
     try {
       await _service.createWardrobeItem(
         imageFile: _selectedImage!,
-        ownerName: _ownerName,
-        ownerType: _ownerType,
+        ownerName: _isShared ? 'Ortak' : _ownerName!,
+        ownerType: _isShared ? ClothingOwnerType.shared : _ownerType,
         name: _nameController.text,
-        category: _category,
-        subcategory: _subcategory,
-        colorName: _colorName,
+        category: _category!,
+        subcategory: _subcategory!,
+        colorName: _colorName!,
         isShared: _isShared,
         season: _season,
         material: _materialController.text,
@@ -669,12 +614,12 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
         careInstructions: _careController.text,
       );
 
-      if (!mounted) return;
+      _resetForm();
 
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Kayıt sırasında hata oluştu: $e')),
       );
@@ -683,6 +628,26 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
         setState(() => _isSaving = false);
       }
     }
+  }
+
+  void _resetForm() {
+    _nameController.clear();
+    _brandController.clear();
+    _materialController.clear();
+    _notesController.clear();
+    _tagsController.clear();
+    _careController.clear();
+
+    setState(() {
+      _selectedImage = null;
+      _ownerName = null;
+      _ownerType = ClothingOwnerType.self;
+      _category = null;
+      _subcategory = null;
+      _colorName = null;
+      _season = null;
+      _isShared = false;
+    });
   }
 
   List<String> _parseTags(String raw) {

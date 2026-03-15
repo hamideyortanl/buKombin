@@ -45,7 +45,21 @@ class WardrobeItemRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     gradient: WardrobePalette.tileGradient,
                   ),
-                  child: Center(
+                  child: item.imageUrl.trim().isNotEmpty
+                      ? ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.network(
+                      item.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        item.category == 'Ayakkabı'
+                            ? Icons.directions_walk
+                            : Icons.checkroom,
+                        color: displayColor.withOpacity(0.95),
+                      ),
+                    ),
+                  )
+                      : Center(
                     child: Icon(
                       item.category == 'Ayakkabı'
                           ? Icons.directions_walk

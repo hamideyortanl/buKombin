@@ -4,14 +4,18 @@ import '../wardrobe_palette.dart';
 
 class FamilyScopeChips extends StatelessWidget {
   final String scope;
+  final List<String> scopes;
   final ValueChanged<String> onChanged;
 
-  const FamilyScopeChips({super.key, required this.scope, required this.onChanged});
+  const FamilyScopeChips({
+    super.key,
+    required this.scope,
+    required this.scopes,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    const scopes = ['Benim', 'Anne', 'Baba', 'Kardeş', 'Ortak Giysiler', 'Tüm Aile Giysileri'];
-
     return SizedBox(
       height: 46,
       child: ListView.separated(
@@ -31,7 +35,9 @@ class FamilyScopeChips extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 color: Colors.white.withOpacity(selected ? 0.72 : 0.60),
                 border: Border.all(
-                  color: selected ? WardrobePalette.textBrown : WardrobePalette.borderSoft,
+                  color: selected
+                      ? WardrobePalette.textBrown
+                      : WardrobePalette.borderSoft,
                   width: selected ? 2 : 1,
                 ),
               ),
@@ -39,7 +45,9 @@ class FamilyScopeChips extends StatelessWidget {
                 child: Text(
                   s,
                   style: TextStyle(
-                    color: selected ? WardrobePalette.textBrown : WardrobePalette.textDark,
+                    color: selected
+                        ? WardrobePalette.textBrown
+                        : WardrobePalette.textDark,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),

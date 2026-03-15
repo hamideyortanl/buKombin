@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/clothing_item.dart';
 import '../../state/app_state.dart';
+import 'services/wardrobe_service.dart';
 import 'wardrobe_palette.dart';
+import 'widgets/add_clothing_item_sheet.dart';
 import 'widgets/add_item_button.dart';
 import 'widgets/category_chips.dart';
 import 'widgets/family_scope_chips.dart';
@@ -10,7 +13,6 @@ import 'widgets/items_grid.dart';
 import 'widgets/items_list.dart';
 import 'widgets/smart_care_section.dart';
 import 'widgets/wardrobe_header.dart';
-import 'widgets/add_clothing_item_sheet.dart';
 
 class WardrobeScreen extends StatefulWidget {
   const WardrobeScreen({super.key});
@@ -20,155 +22,224 @@ class WardrobeScreen extends StatefulWidget {
 }
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
+  final _service = WardrobeService();
+
   bool _grid = true;
   String _query = '';
   String _filter = 'Tümü';
-  String _scope = 'Benim';
+  String _scope = 'Ben';
 
-  late final List<ClothingItem> _items = List.generate(
-    18,
-        (i) {
-      final isJacket = i % 2 == 0;
-      final ownerName = i % 3 == 0
-          ? 'Anne'
-          : (i % 4 == 0 ? 'Baba' : 'Benim');
-      final category = i % 3 == 0
-          ? 'Üst'
-          : (i % 3 == 1 ? 'Alt' : 'Ayakkabı');
-      final colorName = i % 2 == 0 ? 'Kahverengi' : 'Krem';
-      final ownerType = ownerName == 'Benim'
-          ? ClothingOwnerType.self
-          : ClothingOwnerType.familyMember;
+  List<String> _scopeOptions = const ['Ben', 'Ortak Giysiler', 'Tüm Aile Giysileri'];
 
-      return ClothingItem(
-        id: 'demo_$i',
-        ownerUid: 'demo_user',
-        ownerName: ownerName,
-        ownerType: ownerType,
-        name: isJacket ? 'Ceket #$i' : 'Elbise #$i',
-        category: category,
-        subcategory: isJacket ? 'Günlük' : 'Klasik',
-        colorName: colorName,
-        imageUrl: '',
-        imagePath: '',
-        isShared: false,
-        createdAt: DateTime.now().subtract(Duration(days: i)),
-        updatedAt: DateTime.now().subtract(Duration(days: i)),
-        season: i % 2 == 0 ? 'Kış' : 'Yaz',
-        material: i % 2 == 0 ? 'Pamuk' : 'Keten',
-        brand: i % 4 == 0 ? 'BuKombin' : null,
-        notes: i % 5 == 0 ? 'Hassas yıkama önerilir.' : null,
-        tags: i % 2 == 0 ? const ['günlük', 'favori'] : const ['şık'],
-        usageCount: i,
-        careInstructions: i % 3 == 0 ? '30 derecede yıka.' : null,
-        isFavorite: i % 4 == 0,
-      );
-    },
-  );
+  @override
+  void initState() {
+    super.initState();
+    _loadScopeOptions();
+  }
+
+  Future<void> _loadScopeOptions() async {
+    try {
+      final owners = await _service.fetchFamilyOwnerNames();
+      if (!mounted) return;
+
+      final options = <String>['Ben'];
+
+      for (final owner in owners) {
+        final trimmed = owner.trim();
+        if (trimmed.isEmpty) continue;
+        if (!options.contains(trimmed)) {
+          options.add(trimmed);
+        }
+      }
+
+      options.add('Ortak Giysiler');
+      options.add('Tüm Aile Giysileri');
+
+      setState(() {
+        _scopeOptions = options;
+        if (!_scopeOptions.contains(_scope)) {
+          _scope = 'Ben';
+        }
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isFamily = state.current?.isFamilyAccount ?? false;
 
-    final filtered = _items.where((it) {
-      final matchesQuery =
-          _query.isEmpty || it.name.toLowerCase().contains(_query.toLowerCase());
+    return Scaffold(
+      body: SafeArea(
+        child: StreamBuilder<List<ClothingItem>>(
+          stream: _service.streamWardrobeItems(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Dolap verileri alınırken hata oluştu:\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
+            final allItems = snapshot.data ?? <ClothingItem>[];
+            final filtered = _filterItems(allItems, isFamily);
+
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: WardrobeHeader(
+                    title: 'Dolabım',
+                    query: _query,
+                    onQueryChanged: (v) => setState(() => _query = v),
+                    grid: _grid,
+                    onToggleGrid: () => setState(() => _grid = !_grid),
+                    onOpenFilter: () => _openFilterSheet(context),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate(
+                      [
+                        CategoryChips(
+                          value: _filter,
+                          onChanged: (v) => setState(() => _filter = v),
+                        ),
+                        const SizedBox(height: 10),
+                        if (isFamily) ...[
+                          FamilyScopeChips(
+                            scope: _scope,
+                            scopes: _scopeOptions,
+                            onChanged: (v) => setState(() => _scope = v),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        Text(
+                          '${filtered.length} parça bulundu',
+                          style: const TextStyle(color: WardrobePalette.textMuted),
+                        ),
+                        const SizedBox(height: 14),
+                        if (filtered.isEmpty)
+                          _buildEmptyState()
+                        else if (_grid)
+                          ItemsGrid(
+                            items: filtered,
+                            showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
+                          )
+                        else
+                          ItemsList(
+                            items: filtered,
+                            showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
+                          ),
+                        const SizedBox(height: 16),
+                        AddItemButton(
+                          onTap: () async {
+                            final added = await showModalBottomSheet<bool>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const AddClothingItemSheet(),
+                            );
+
+                            if (!context.mounted) return;
+
+                            if (added == true) {
+                              await _loadScopeOptions();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Yeni giysi başarıyla eklendi.'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        SmartCareSection(
+                          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Akıllı bakım önerileri sonraki adımda bağlanacak.'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<ClothingItem> _filterItems(List<ClothingItem> items, bool isFamily) {
+    return items.where((it) {
+      final q = _query.trim().toLowerCase();
+
+      final matchesQuery = q.isEmpty ||
+          it.name.toLowerCase().contains(q) ||
+          it.category.toLowerCase().contains(q) ||
+          it.subcategory.toLowerCase().contains(q) ||
+          it.colorName.toLowerCase().contains(q) ||
+          it.ownerName.toLowerCase().contains(q);
 
       final matchesFilter = _filter == 'Tümü' || it.category == _filter;
 
-      final matchesScope = !isFamily ||
-          _scope == 'Tüm Aile Giysileri' ||
-          _scope == 'Ortak Giysiler'
-          ? true
-          : it.ownerName == _scope;
+      bool matchesScope = true;
 
-      if (!matchesQuery || !matchesFilter || !matchesScope) {
-        return false;
+      if (isFamily) {
+        if (_scope == 'Ben') {
+          matchesScope = it.ownerType == ClothingOwnerType.self && !it.isShared;
+        } else if (_scope == 'Ortak Giysiler') {
+          matchesScope = it.isShared || it.ownerType == ClothingOwnerType.shared;
+        } else if (_scope == 'Tüm Aile Giysileri') {
+          matchesScope = true;
+        } else {
+          matchesScope = it.ownerName == _scope;
+        }
       }
 
-      if (_scope == 'Ortak Giysiler') {
-        return it.isShared || it.ownerType == ClothingOwnerType.shared;
-      }
-
-      return true;
+      return matchesQuery && matchesFilter && matchesScope;
     }).toList();
+  }
 
-    return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: WardrobeHeader(
-                title: 'Dolabım',
-                query: _query,
-                onQueryChanged: (v) => setState(() => _query = v),
-                grid: _grid,
-                onToggleGrid: () => setState(() => _grid = !_grid),
-                onOpenFilter: () => _openFilterSheet(context),
-              ),
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.60),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WardrobePalette.borderSoft),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.checkroom_outlined, size: 40, color: WardrobePalette.textBrown),
+          SizedBox(height: 12),
+          Text(
+            'Henüz bu filtreye uygun giysi yok.',
+            style: TextStyle(
+              color: WardrobePalette.textDark,
+              fontWeight: FontWeight.w700,
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    CategoryChips(
-                      value: _filter,
-                      onChanged: (v) => setState(() => _filter = v),
-                    ),
-                    const SizedBox(height: 10),
-                    if (isFamily) ...[
-                      FamilyScopeChips(
-                        scope: _scope,
-                        onChanged: (v) => setState(() => _scope = v),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    Text(
-                      '${filtered.length} parça bulundu',
-                      style: const TextStyle(color: WardrobePalette.textMuted),
-                    ),
-                    const SizedBox(height: 14),
-                    if (_grid)
-                      ItemsGrid(
-                        items: filtered,
-                        showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
-                      )
-                    else
-                      ItemsList(
-                        items: filtered,
-                        showOwner: isFamily && _scope == 'Tüm Aile Giysileri',
-                      ),
-                    const SizedBox(height: 16),
-                    AddItemButton(
-                        onTap: () async {
-                          final added = await showModalBottomSheet<bool>(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const AddClothingItemSheet(),
-                          );
-                          if (!context.mounted) return;
-                          if (added == true) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Yeni giysi başarıyla eklendi.')),
-                            );
-                          }
-                          },
-                    ),
-                    const SizedBox(height: 14),
-                    SmartCareSection(
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Akıllı bakım önerileri yakında bağlanacak')),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Yeni bir ürün ekleyerek dolabını oluşturmaya başlayabilirsin.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: WardrobePalette.textMuted),
+          ),
+        ],
       ),
     );
   }
@@ -197,7 +268,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: ['Tümü', 'Üst', 'Alt', 'Ayakkabı'].map((f) {
+                children: ['Tümü', 'Üst', 'Alt', 'Elbise', 'Ayakkabı', 'Dış Giyim', 'Aksesuar']
+                    .map((f) {
                   final selected = _filter == f;
                   return ChoiceChip(
                     label: Text(f),
@@ -214,21 +286,22 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       color: selected
                           ? WardrobePalette.textBrown
                           : WardrobePalette.textDark,
-                      fontWeight:
-                      selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   );
                 }).toList(),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Not: Filtre yapısı korunup yeni modele uyarlanmıştır.',
-                style: TextStyle(color: WardrobePalette.textMuted),
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  bool _isMineLabel(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == 'ben' ||
+        normalized == 'kendim' ||
+        normalized == 'self';
   }
 }

@@ -4,13 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/material.dart';
 
 import '../../../models/clothing_item.dart';
+import '../../home/services/home_activity_service.dart';
 
 class WardrobeService {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
   final FirebaseAuth _auth;
+  final HomeActivityService _activityService = HomeActivityService();
 
   WardrobeService({
     FirebaseFirestore? firestore,
@@ -109,6 +112,12 @@ class WardrobeService {
     );
 
     await docRef.set(item.toMap());
+    await _activityService.logActivity(
+      icon: Icons.add_circle,
+      title: '${item.name} dolaba eklendi',
+      subtitle: 'Yeni parça eklendi',
+      at: now,
+    );
     return item;
   }
 
@@ -130,6 +139,15 @@ class WardrobeService {
       },
       SetOptions(merge: true),
     );
+    final doc = await _itemsRef(uid).doc(itemId).get();
+    final item = doc.data() == null ? null : ClothingItem.fromFirestore(doc);
+    if (item != null) {
+      await _activityService.logActivity(
+        icon: Icons.checkroom_outlined,
+        title: '${item.name} bugün giyildi',
+        subtitle: 'Kullanım sayısı güncellendi',
+      );
+    }
   }
 
   Future<void> toggleFavorite({required String itemId, required bool isFavorite}) async {
@@ -141,6 +159,15 @@ class WardrobeService {
       },
       SetOptions(merge: true),
     );
+    final doc = await _itemsRef(uid).doc(itemId).get();
+    final item = doc.data() == null ? null : ClothingItem.fromFirestore(doc);
+    if (item != null) {
+      await _activityService.logActivity(
+        icon: isFavorite ? Icons.favorite : Icons.heart_broken_outlined,
+        title: isFavorite ? '${item.name} favorilere eklendi' : '${item.name} favorilerden çıkarıldı',
+        subtitle: isFavorite ? 'Favori listesi güncellendi' : 'Favori listesi düzenlendi',
+      );
+    }
   }
 
   Future<void> markItemAsWashing({required String itemId}) async {
@@ -152,6 +179,15 @@ class WardrobeService {
       },
       SetOptions(merge: true),
     );
+    final doc = await _itemsRef(uid).doc(itemId).get();
+    final item = doc.data() == null ? null : ClothingItem.fromFirestore(doc);
+    if (item != null) {
+      await _activityService.logActivity(
+        icon: Icons.local_laundry_service,
+        title: '${item.name} yıkamaya alındı',
+        subtitle: 'Çamaşır durumu güncellendi',
+      );
+    }
   }
 
   Future<void> markItemAsClean({required String itemId}) async {
@@ -165,6 +201,15 @@ class WardrobeService {
       },
       SetOptions(merge: true),
     );
+    final doc = await _itemsRef(uid).doc(itemId).get();
+    final item = doc.data() == null ? null : ClothingItem.fromFirestore(doc);
+    if (item != null) {
+      await _activityService.logActivity(
+        icon: Icons.fact_check_outlined,
+        title: '${item.name} yıkamadan çıktı',
+        subtitle: 'Parça tekrar kullanıma hazır',
+      );
+    }
   }
 
   Future<void> deleteWardrobeItem(ClothingItem item) async {

@@ -55,7 +55,7 @@ class HomeSustainabilityCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
                     height: 8,
-                    color: Colors.white.withOpacity(0.60),
+                    color: Colors.white,
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: FractionallySizedBox(

@@ -123,7 +123,7 @@ class _AddClothingItemSheetState extends State<AddClothingItemSheet> {
     return SafeArea(
       child: Container(
         decoration: const BoxDecoration(
-          color: WardrobePalette.bg1,
+          color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: SingleChildScrollView(

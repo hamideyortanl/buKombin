@@ -10,15 +10,55 @@ import '../profile/profile_screen.dart';
 import '../wardrobe/wardrobe_screen.dart';
 import 'home_screen.dart';
 
+class RootShellScope extends InheritedWidget {
+  const RootShellScope({
+    super.key,
+    required this.controller,
+    required super.child,
+  });
+
+  final RootShellController controller;
+
+  static RootShellController? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<RootShellScope>()?.controller;
+  }
+
+  @override
+  bool updateShouldNotify(covariant RootShellScope oldWidget) {
+    return oldWidget.controller != controller;
+  }
+}
+
+abstract class RootShellController {
+  void switchTab(int index);
+
+  void openWardrobe({
+    String filter = 'Tümü',
+    String scope = 'Tüm Aile Giysileri',
+    bool favoritesOnly = false,
+  });
+}
+
+
 class RootShell extends StatefulWidget {
-  const RootShell({super.key});
+  const RootShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
+
 
   @override
   State<RootShell> createState() => _RootShellState();
 }
 
-class _RootShellState extends State<RootShell> {
-  int _index = 0;
+class _RootShellState extends State<RootShell> implements RootShellController {
+  late int _index;
+  final GlobalKey<WardrobeScreenState> _wardrobeKey = GlobalKey<WardrobeScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+  }
 
   // Sohbet geçmişi RootShell'de tutulur: sekmeler değişse bile sohbet kalır.
   final ValueNotifier<List<ChatMessage>> _messages = ValueNotifier<List<ChatMessage>>(
@@ -27,13 +67,33 @@ class _RootShellState extends State<RootShell> {
     ],
   );
 
-  final _screens = const [
-    HomeScreen(),
-    WardrobeScreen(),
-    OutfitsScreen(),
-    CommunityScreen(),
-    ProfileScreen(),
+  late final List<Widget> _screens = [
+    const HomeScreen(),
+    WardrobeScreen(key: _wardrobeKey),
+    const OutfitsScreen(),
+    const CommunityScreen(),
+    const ProfileScreen(),
   ];
+
+  void switchTab(int index) {
+    if (!mounted) return;
+    setState(() => _index = index);
+  }
+
+  void openWardrobe({
+    String filter = 'Tümü',
+    String scope = 'Tüm Aile Giysileri',
+    bool favoritesOnly = false,
+  }) {
+    setState(() => _index = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _wardrobeKey.currentState?.applyHomePreset(
+        filter: filter,
+        scope: scope,
+        favoritesOnly: favoritesOnly,
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -61,18 +121,20 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
-      bottomNavigationBar: _BottomNav(
-        index: _index,
-        onChanged: (i) {
-          // Chatbot tam ortada: menünün 3. öğesi (index 2) sekme değiştirmez.
-          if (i == 2) {
-            _openChat();
-            return;
-          }
-          setState(() => _index = i);
-        },
+    return RootShellScope(
+      controller: this,
+      child: Scaffold(
+        body: IndexedStack(index: _index, children: _screens),
+        bottomNavigationBar: _BottomNav(
+          index: _index,
+          onChanged: (i) {
+            if (i == 2) {
+              _openChat();
+              return;
+            }
+            setState(() => _index = i);
+          },
+        ),
       ),
     );
   }

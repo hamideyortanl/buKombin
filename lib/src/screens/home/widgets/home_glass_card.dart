@@ -23,7 +23,7 @@ class HomeGlassCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.60),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: _borderSoft),
           ),

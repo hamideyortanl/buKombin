@@ -6,12 +6,14 @@ class HomeTodaysOutfitCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool isPassive;
 
   const HomeTodaysOutfitCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.isPassive = false,
   });
 
   @override
@@ -43,6 +45,27 @@ class HomeTodaysOutfitCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (isPassive)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.22)),
+                      ),
+                      child: const Text(
+                        'Yakında Aktif',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 Positioned(
                   left: 14,
                   right: 14,
@@ -88,10 +111,10 @@ class HomeTodaysOutfitCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'Detayları Gör',
-                    style: TextStyle(color: Color(0xFFE8DDD5), fontWeight: FontWeight.w600),
+                    isPassive ? 'Hazır Olunca Haber Ver' : 'Detayları Gör',
+                    style: const TextStyle(color: Color(0xFFE8DDD5), fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

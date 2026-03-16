@@ -36,15 +36,15 @@ class _WardrobeItemDetailScreenState extends State<WardrobeItemDetailScreen> {
     final careTips = WardrobeCareEngine.generateTips([_item]);
 
     return Scaffold(
-      backgroundColor: WardrobePalette.bg1,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [
             CustomScrollView(
               slivers: [
                 SliverAppBar(
-                  backgroundColor: WardrobePalette.bg1,
-                  surfaceTintColor: WardrobePalette.bg1,
+                  backgroundColor: Colors.white,
+                  surfaceTintColor: Colors.white,
                   pinned: true,
                   expandedHeight: 320,
                   leading: IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.arrow_back_ios_new)),
@@ -90,6 +90,7 @@ class _WardrobeItemDetailScreenState extends State<WardrobeItemDetailScreen> {
                           WardrobeDetailStatChip(icon: Icons.palette_outlined, label: 'Renk', value: _item.colorName),
                           WardrobeDetailStatChip(icon: Icons.repeat_rounded, label: 'Kullanım', value: '${_item.usageCount} kez'),
                           WardrobeDetailStatChip(icon: Icons.schedule_rounded, label: 'Son giyilme', value: _formatLastWorn(_item.lastWornAt)),
+                          WardrobeDetailStatChip(icon: Icons.inventory_2_outlined, label: 'Dolaba eklendi', value: _formatDate(_item.createdAt)),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -219,7 +220,7 @@ class _WardrobeItemDetailScreenState extends State<WardrobeItemDetailScreen> {
 
   Widget _buildBadge({required String text, required IconData icon}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.74), borderRadius: BorderRadius.circular(16), border: Border.all(color: WardrobePalette.borderSoft)),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: WardrobePalette.borderSoft)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16, color: WardrobePalette.textBrown), const SizedBox(width: 6), Text(text, style: const TextStyle(color: WardrobePalette.textDark, fontWeight: FontWeight.w700))]),
       );
 
@@ -257,6 +258,7 @@ class _WardrobeItemDetailScreenState extends State<WardrobeItemDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         title: Text('🧺 ${_item.name} yıkamaya atılsın mı?'),
         content: Text('Öneri:\n• ${profile.washTemperature}\n• ${profile.washMethod}\n• ${profile.dryingMethod}'),
         actions: [
@@ -294,7 +296,7 @@ class _WardrobeItemDetailScreenState extends State<WardrobeItemDetailScreen> {
   }
 
   Future<void> _openEditSheet() async {
-    final updated = await showModalBottomSheet<ClothingItem>(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => EditClothingItemSheet(item: _item));
+    final updated = await showModalBottomSheet<ClothingItem>(context: context, isScrollControlled: true, backgroundColor: Colors.white, builder: (_) => EditClothingItemSheet(item: _item));
     if (updated == null || !mounted) return;
     setState(() => _item = updated);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Giysi bilgileri güncellendi.')));

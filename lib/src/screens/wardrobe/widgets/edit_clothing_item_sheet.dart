@@ -122,7 +122,7 @@ class _EditClothingItemSheetState extends State<EditClothingItemSheet> {
     return SafeArea(
       child: Container(
         decoration: const BoxDecoration(
-          color: WardrobePalette.bg1,
+          color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: SingleChildScrollView(

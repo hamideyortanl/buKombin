@@ -22,13 +22,22 @@ import 'widgets/smart_care_section.dart';
 import 'widgets/wardrobe_header.dart';
 
 class WardrobeScreen extends StatefulWidget {
-  const WardrobeScreen({super.key});
+  final String initialFilter;
+  final String initialScope;
+  final bool initialFavoritesOnly;
+
+  const WardrobeScreen({
+    super.key,
+    this.initialFilter = 'Tümü',
+    this.initialScope = 'Ben',
+    this.initialFavoritesOnly = false,
+  });
 
   @override
-  State<WardrobeScreen> createState() => _WardrobeScreenState();
+  State<WardrobeScreen> createState() => WardrobeScreenState();
 }
 
-class _WardrobeScreenState extends State<WardrobeScreen> {
+class WardrobeScreenState extends State<WardrobeScreen> {
   final _service = WardrobeService();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -37,14 +46,34 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   bool _showFilterAction = false;
   String _query = '';
   String _liveQuery = '';
-  String _filter = 'Tümü';
-  String _scope = 'Ben';
+  late String _filter;
+  late String _scope;
+  late bool _favoritesOnly;
 
   List<String> _scopeOptions = const ['Ben', 'Ortak Giysiler', 'Tüm Aile Giysileri'];
+
+  void applyHomePreset({
+    String filter = 'Tümü',
+    String scope = 'Tüm Aile Giysileri',
+    bool favoritesOnly = false,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _filter = filter;
+      _scope = scope;
+      _favoritesOnly = favoritesOnly;
+      _query = '';
+      _liveQuery = '';
+      _showFilterAction = false;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _filter = widget.initialFilter;
+    _scope = widget.initialScope;
+    _favoritesOnly = widget.initialFavoritesOnly;
     _loadScopeOptions();
   }
 
@@ -128,8 +157,16 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 query: _query,
                 filter: _filter,
                 scope: _scope,
+                favoritesOnly: _favoritesOnly,
                 scopeOptions: _scopeOptions,
-                onScopeChanged: (value) => setState(() => _scope = value),
+                onScopeChanged: (value) {
+                  setState(() {
+                    _scope = value;
+                    if (_favoritesOnly && value != 'Tüm Aile Giysileri') {
+                      _favoritesOnly = false;
+                    }
+                  });
+                },
                 onItemTap: _openItemDetail,
                 onAddItem: _handleAddItem,
               ),
@@ -145,7 +182,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     final added = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       builder: (_) => const AddClothingItemSheet(),
     );
 
@@ -176,7 +213,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: WardrobePalette.bg1,
+      backgroundColor: Colors.white,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (_, setSheetState) => SafeArea(
@@ -258,6 +295,22 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   ],
                 ),
                 const SizedBox(height: 18),
+                const Text(
+                  'Özel görünüm',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: WardrobePalette.textDark,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FilterChip(
+                  label: const Text('Sadece favoriler'),
+                  selected: _favoritesOnly,
+                  onSelected: (value) {
+                    setState(() => _favoritesOnly = value);
+                    setSheetState(() {});
+                  },
+                ),
                 const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
@@ -290,6 +343,7 @@ class _WardrobeItemsSection extends StatefulWidget {
   final String query;
   final String filter;
   final String scope;
+  final bool favoritesOnly;
   final List<String> scopeOptions;
   final ValueChanged<String> onScopeChanged;
   final ValueChanged<ClothingItem> onItemTap;
@@ -302,6 +356,7 @@ class _WardrobeItemsSection extends StatefulWidget {
     required this.query,
     required this.filter,
     required this.scope,
+    required this.favoritesOnly,
     required this.scopeOptions,
     required this.onScopeChanged,
     required this.onItemTap,
@@ -343,6 +398,7 @@ class _WardrobeItemsSectionState extends State<_WardrobeItemsSection> {
           widget.query,
           widget.filter,
           widget.scope,
+          widget.favoritesOnly,
         );
         final careTips = WardrobeCareEngine.generateTips(allItems);
         _maybeNotify(careTips);
@@ -415,6 +471,7 @@ class _WardrobeItemsSectionState extends State<_WardrobeItemsSection> {
     String query,
     String filter,
     String scope,
+    bool favoritesOnly,
   ) {
     var result = List<ClothingItem>.from(items);
 
@@ -440,6 +497,10 @@ class _WardrobeItemsSectionState extends State<_WardrobeItemsSection> {
 
     if (filter != 'Tümü') {
       result = result.where((item) => item.category == filter).toList();
+    }
+
+    if (favoritesOnly) {
+      result = result.where((item) => item.isFavorite).toList();
     }
 
     if (isFamily) {

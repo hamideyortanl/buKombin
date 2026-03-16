@@ -111,6 +111,7 @@ class SmartCareSection extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         title: Text('${tip.emoji} ${tip.title}'),
         content: Text(tip.message),
         actions: [
@@ -142,7 +143,7 @@ class SmartCareSection extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: WardrobePalette.bg1,
+      backgroundColor: Colors.white,
       showDragHandle: true,
       builder: (_) {
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
@@ -195,6 +196,7 @@ class SmartCareSection extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         title: Text('🧺 ${item.name} yıkamaya atılsın mı?'),
         content: Text('Öneri:\n• ${profile.washTemperature}\n• ${profile.washMethod}\n• ${profile.dryingMethod}'),
         actions: [

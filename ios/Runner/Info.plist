@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSUserNotificationUsageDescription</key>
+    <string>Kıyafet bakım önerileri ve yıkama hatırlatmaları gönderebilmek için bildirim izni gerekiyor.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+    </array>
     <key>NSCameraUsageDescription</key>
     <string>Kıyafet fotoğrafı çekmek için kamera kullanılır.</string>
     <key>NSPhotoLibraryUsageDescription</key>

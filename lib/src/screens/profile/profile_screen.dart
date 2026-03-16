@@ -26,16 +26,21 @@ class ProfileScreen extends StatelessWidget {
             BuKombinTopHeader(
               title: 'Profil',
               // İstenen: kahverengi alan biraz daha geniş + kullanıcı adı vb. burada görünsün.
-              padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
+              padding: const EdgeInsets.fromLTRB(
+                BuKombinMetrics.headerHorizontalPadding,
+                BuKombinMetrics.headerTopPadding,
+                BuKombinMetrics.headerHorizontalPadding,
+                BuKombinMetrics.headerBottomPadding + 4,
+              ),
               content: Row(
                 children: [
                   Container(
                     width: 54,
                     height: 54,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.20)),
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(BuKombinMetrics.cardRadius),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
                     ),
                     child: const Icon(Icons.person, color: BuKombinColors.beige1),
                   ),
@@ -165,9 +170,9 @@ class ProfileScreen extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: BuKombinColors.accent.withOpacity(0.30)),
+            border: Border.all(color: BuKombinColors.accent.withValues(alpha: 0.26)),
           ),
           child: ListTile(
             leading: Icon(icon, color: BuKombinColors.brown2),

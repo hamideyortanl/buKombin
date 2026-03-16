@@ -10,12 +10,7 @@ class WardrobeItemCard extends StatelessWidget {
   final bool showOwner;
   final VoidCallback? onTap;
 
-  const WardrobeItemCard({
-    super.key,
-    required this.item,
-    required this.showOwner,
-    this.onTap,
-  });
+  const WardrobeItemCard({super.key, required this.item, required this.showOwner, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -33,75 +28,39 @@ class WardrobeItemCard extends StatelessWidget {
               color: Colors.white.withOpacity(0.60),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: WardrobePalette.borderSoft),
-              boxShadow: [
-                BoxShadow(
-                  color: WardrobePalette.textBrown.withOpacity(0.10),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: WardrobePalette.textBrown.withOpacity(0.10), blurRadius: 18, offset: const Offset(0, 10))],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: item.hasImage
-                      ? ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(20),
-                          ),
-                          child: Image.network(
-                            item.imageUrl,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _fallbackIcon(displayColor),
-                          ),
-                        )
-                      : _fallbackIcon(displayColor),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: item.hasImage
+                            ? ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                child: Image.network(item.imageUrl, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _fallbackIcon(displayColor)),
+                              )
+                            : _fallbackIcon(displayColor),
+                      ),
+                      if (item.isInLaundry)
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: _badge('Yıkamada'),
+                        ),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: WardrobePalette.textDark,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (item.isFavorite)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 6),
-                              child: Icon(
-                                Icons.favorite_rounded,
-                                size: 16,
-                                color: WardrobePalette.textBrown,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${item.category} • ${item.colorName}',
-                        style: const TextStyle(color: WardrobePalette.muted2),
-                      ),
-                      if (showOwner) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'Sahip: ${item.ownerName}',
-                          style: const TextStyle(color: WardrobePalette.muted2),
-                        ),
-                      ],
-                    ],
-                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [Expanded(child: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: WardrobePalette.textDark, fontWeight: FontWeight.w700))), if (item.isFavorite) const Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.favorite_rounded, size: 16, color: WardrobePalette.textBrown))]),
+                    const SizedBox(height: 4),
+                    Text('${item.category} • ${item.colorName}', style: const TextStyle(color: WardrobePalette.muted2)),
+                    if (showOwner) ...[const SizedBox(height: 6), Text('Sahip: ${item.ownerName}', style: const TextStyle(color: WardrobePalette.muted2))],
+                  ]),
                 ),
               ],
             ),
@@ -111,57 +70,34 @@ class WardrobeItemCard extends StatelessWidget {
     );
   }
 
-  Widget _fallbackIcon(Color displayColor) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: WardrobePalette.tileGradient,
-      ),
-      child: Center(
-        child: Icon(
-          item.category == 'Ayakkabı' ? Icons.directions_walk : Icons.checkroom,
-          size: 44,
-          color: displayColor.withOpacity(0.95),
-        ),
-      ),
-    );
-  }
+  Widget _badge(String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(color: Colors.black.withOpacity(0.55), borderRadius: BorderRadius.circular(10)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      );
+
+  Widget _fallbackIcon(Color displayColor) => Container(width: double.infinity, decoration: const BoxDecoration(gradient: WardrobePalette.tileGradient), child: Center(child: Icon(item.category == 'Ayakkabı' ? Icons.directions_walk : Icons.checkroom, size: 44, color: displayColor.withOpacity(0.95))));
 
   Color _colorFromName(String colorName) {
     switch (colorName.toLowerCase()) {
-      case 'siyah':
-        return Colors.black87;
-      case 'beyaz':
-        return Colors.white;
-      case 'mavi':
-        return Colors.blue;
-      case 'lacivert':
-        return Colors.indigo;
+      case 'siyah': return Colors.black87;
+      case 'beyaz': return Colors.white;
+      case 'mavi': return Colors.blue;
+      case 'lacivert': return Colors.indigo;
       case 'kırmızı':
-      case 'kirmizi':
-        return Colors.red;
+      case 'kirmizi': return Colors.red;
       case 'yeşil':
-      case 'yesil':
-        return Colors.green;
-      case 'gri':
-        return Colors.grey;
-      case 'kahverengi':
-        return Colors.brown;
-      case 'bej':
-        return const Color(0xFFD6C1A3);
-      case 'krem':
-        return const Color(0xFFE8DDD5);
-      case 'pembe':
-        return Colors.pink;
-      case 'mor':
-        return Colors.purple;
+      case 'yesil': return Colors.green;
+      case 'gri': return Colors.grey;
+      case 'kahverengi': return Colors.brown;
+      case 'bej': return const Color(0xFFD6C1A3);
+      case 'krem': return const Color(0xFFE8DDD5);
+      case 'pembe': return Colors.pink;
+      case 'mor': return Colors.purple;
       case 'sarı':
-      case 'sari':
-        return Colors.amber;
-      case 'turuncu':
-        return Colors.orange;
-      default:
-        return WardrobePalette.textBrown;
+      case 'sari': return Colors.amber;
+      case 'turuncu': return Colors.orange;
+      default: return WardrobePalette.textBrown;
     }
   }
 }

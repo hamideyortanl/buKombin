@@ -71,6 +71,10 @@ class AppState extends ChangeNotifier {
 
     _initialized = true;
     notifyListeners();
+
+    if (_weather == null && !_isWeatherLoading) {
+      refreshWeather();
+    }
   }
 
   Account _accountFromProfile(Map<String, dynamic> profile) {

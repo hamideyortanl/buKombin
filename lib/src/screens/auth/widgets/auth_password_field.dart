@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../theme/app_theme.dart';
 import 'glass_field_shell.dart';
 
 class AuthPasswordField extends StatelessWidget {
@@ -34,18 +36,17 @@ class AuthPasswordField extends StatelessWidget {
         controller: controller,
         obscureText: !show, // Şifre noktaları (Artık çökmeyecek!)
         style: TextStyle(color: textColor, fontSize: 16),
-        decoration: InputDecoration(
+        decoration: BuKombinInputStyles.authField(
           hintText: hintText,
-          hintStyle: TextStyle(color: hintColor),
-          prefixIcon: Icon(Icons.lock_outline, color: iconColor),
+          prefixIcon: Icons.lock_outline,
+          iconColor: iconColor,
+          hintColor: hintColor,
           suffixIcon: showToggle
               ? IconButton(
-            onPressed: onToggle,
-            icon: Icon(show ? Icons.visibility_off : Icons.visibility, color: iconColor),
-          )
+                  onPressed: onToggle,
+                  icon: Icon(show ? Icons.visibility_off : Icons.visibility, color: iconColor),
+                )
               : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );

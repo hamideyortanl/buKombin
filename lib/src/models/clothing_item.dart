@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 const Object _unset = Object();
 
+const String kLaundryStatusActive = 'active';
+const String kLaundryStatusWashing = 'washing';
+
 enum ClothingOwnerType {
   self,
   familyMember,
@@ -48,13 +51,17 @@ class ClothingItem {
 
   final String? season;
   final String? material;
+  final String? fabricBlend;
   final String? brand;
   final String? notes;
   final List<String> tags;
   final int usageCount;
   final DateTime? lastWornAt;
   final String? careInstructions;
+  final DateTime? lastWashedAt;
+  final bool careLabelKnown;
   final bool isFavorite;
+  final String laundryStatus;
 
   const ClothingItem({
     required this.id,
@@ -72,13 +79,17 @@ class ClothingItem {
     required this.updatedAt,
     this.season,
     this.material,
+    this.fabricBlend,
     this.brand,
     this.notes,
     this.tags = const [],
     this.usageCount = 0,
     this.lastWornAt,
     this.careInstructions,
+    this.lastWashedAt,
+    this.careLabelKnown = false,
     this.isFavorite = false,
+    this.laundryStatus = kLaundryStatusActive,
   });
 
   bool get hasNotes => notes != null && notes!.trim().isNotEmpty;
@@ -88,10 +99,15 @@ class ClothingItem {
   bool get hasCareInstructions =>
       careInstructions != null && careInstructions!.trim().isNotEmpty;
   bool get hasImage => imageUrl.trim().isNotEmpty;
+  bool get hasFabricBlend => fabricBlend != null && fabricBlend!.trim().isNotEmpty;
+  bool get hasLastWashedAt => lastWashedAt != null;
   bool get isMine => ownerType == ClothingOwnerType.self && !isShared;
   bool get isSharedItem => isShared || ownerType == ClothingOwnerType.shared;
+  bool get isInLaundry => laundryStatus == kLaundryStatusWashing;
+  bool get isAvailableForOutfit => !isInLaundry;
 
   String get ownerTypeValue => ownerType.value;
+  String get laundryStatusLabel => isInLaundry ? 'Yıkamada' : 'Aktif';
 
   Map<String, dynamic> toMap() {
     return {
@@ -110,14 +126,17 @@ class ClothingItem {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'season': season,
       'material': material,
+      'fabricBlend': fabricBlend,
       'brand': brand,
       'notes': notes,
       'tags': tags,
       'usageCount': usageCount,
-      'lastWornAt':
-      lastWornAt == null ? null : Timestamp.fromDate(lastWornAt!),
+      'lastWornAt': lastWornAt == null ? null : Timestamp.fromDate(lastWornAt!),
       'careInstructions': careInstructions,
+      'lastWashedAt': lastWashedAt == null ? null : Timestamp.fromDate(lastWashedAt!),
+      'careLabelKnown': careLabelKnown,
       'isFavorite': isFavorite,
+      'laundryStatus': laundryStatus,
     };
   }
 
@@ -131,10 +150,10 @@ class ClothingItem {
     final rawTags = map['tags'];
     final parsedTags = rawTags is List
         ? rawTags
-        .whereType<String>()
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList()
+            .whereType<String>()
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList()
         : <String>[];
 
     return ClothingItem(
@@ -153,21 +172,21 @@ class ClothingItem {
       updatedAt: readDate(map['updatedAt']),
       season: map['season'] as String?,
       material: map['material'] as String?,
+      fabricBlend: map['fabricBlend'] as String?,
       brand: map['brand'] as String?,
       notes: map['notes'] as String?,
       tags: parsedTags,
       usageCount: (map['usageCount'] ?? 0) as int,
-      lastWornAt: map['lastWornAt'] == null
-          ? null
-          : readDate(map['lastWornAt']),
+      lastWornAt: map['lastWornAt'] == null ? null : readDate(map['lastWornAt']),
       careInstructions: map['careInstructions'] as String?,
+      lastWashedAt: map['lastWashedAt'] == null ? null : readDate(map['lastWashedAt']),
+      careLabelKnown: (map['careLabelKnown'] ?? false) as bool,
       isFavorite: (map['isFavorite'] ?? false) as bool,
+      laundryStatus: (map['laundryStatus'] ?? kLaundryStatusActive) as String,
     );
   }
 
-  factory ClothingItem.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc,
-      ) {
+  factory ClothingItem.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ClothingItem.fromMap({
       ...data,
@@ -191,13 +210,17 @@ class ClothingItem {
     DateTime? updatedAt,
     Object? season = _unset,
     Object? material = _unset,
+    Object? fabricBlend = _unset,
     Object? brand = _unset,
     Object? notes = _unset,
     List<String>? tags,
     int? usageCount,
     Object? lastWornAt = _unset,
     Object? careInstructions = _unset,
+    Object? lastWashedAt = _unset,
+    bool? careLabelKnown,
     bool? isFavorite,
+    String? laundryStatus,
   }) {
     return ClothingItem(
       id: id ?? this.id,
@@ -215,17 +238,21 @@ class ClothingItem {
       updatedAt: updatedAt ?? this.updatedAt,
       season: identical(season, _unset) ? this.season : season as String?,
       material: identical(material, _unset) ? this.material : material as String?,
+      fabricBlend: identical(fabricBlend, _unset) ? this.fabricBlend : fabricBlend as String?,
       brand: identical(brand, _unset) ? this.brand : brand as String?,
       notes: identical(notes, _unset) ? this.notes : notes as String?,
       tags: tags ?? this.tags,
       usageCount: usageCount ?? this.usageCount,
-      lastWornAt: identical(lastWornAt, _unset)
-          ? this.lastWornAt
-          : lastWornAt as DateTime?,
+      lastWornAt: identical(lastWornAt, _unset) ? this.lastWornAt : lastWornAt as DateTime?,
       careInstructions: identical(careInstructions, _unset)
           ? this.careInstructions
           : careInstructions as String?,
+      lastWashedAt: identical(lastWashedAt, _unset)
+          ? this.lastWashedAt
+          : lastWashedAt as DateTime?,
+      careLabelKnown: careLabelKnown ?? this.careLabelKnown,
       isFavorite: isFavorite ?? this.isFavorite,
+      laundryStatus: laundryStatus ?? this.laundryStatus,
     );
   }
 }

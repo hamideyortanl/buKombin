@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'glass_field_shell.dart';
+import '../../../theme/app_theme.dart';
 
 enum AuthInputPolicy { fullName, username, email }
 
@@ -50,12 +51,11 @@ class AuthTextField extends StatelessWidget {
         keyboardType: keyboardType,
         style: TextStyle(color: textColor, fontSize: 16),
         inputFormatters: formatters,
-        decoration: InputDecoration(
+        decoration: BuKombinInputStyles.authField(
           hintText: hintText,
-          hintStyle: TextStyle(color: hintColor),
-          prefixIcon: Icon(prefixIcon, color: iconColor),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          prefixIcon: prefixIcon,
+          iconColor: iconColor,
+          hintColor: hintColor,
         ),
       ),
     );

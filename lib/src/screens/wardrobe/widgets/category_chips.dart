@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../wardrobe_metadata.dart';
 import '../wardrobe_palette.dart';
 
 class CategoryChips extends StatelessWidget {
@@ -10,7 +11,7 @@ class CategoryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cats = ['Tümü', 'Üst', 'Alt', 'Ayakkabı'];
+    final cats = ['Tümü', ...WardrobeMetadata.categories];
 
     return SizedBox(
       height: 46,

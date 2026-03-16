@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_theme.dart';
+
 class GlassFieldShell extends StatelessWidget {
   final Widget child;
   final Color borderColor;
@@ -8,12 +10,8 @@ class GlassFieldShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        border: Border.all(color: borderColor, width: 1.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return DecoratedBox(
+      decoration: BuKombinDecorations.inputShell(borderColor: borderColor),
       child: child,
     );
   }

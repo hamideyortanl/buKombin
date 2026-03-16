@@ -8,20 +8,20 @@ import 'firebase_options.dart';
 // -------------------------------------------
 
 import 'src/app/bukombin_app.dart';
+import 'src/services/notification_service.dart';
 import 'src/state/app_state.dart';
 
 Future<void> main() async {
-  // Flutter'ın arka planını hazırlıyoruz (zaten sende vardı)
+
   WidgetsFlutterBinding.ensureInitialized();
 
-  // --- YENİ EKLENEN FİREBASE BAŞLATMA KODU ---
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // -------------------------------------------
 
-  // Senin kendi ayarların
   await dotenv.load(fileName: ".env");
+
+  await NotificationService.instance.init();
 
   final appState = AppState();
   await appState.init();

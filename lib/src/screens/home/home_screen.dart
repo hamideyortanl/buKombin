@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
+import '../../theme/app_theme.dart';
 import 'widgets/home_activity_row.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_planned_event_card.dart';
@@ -28,8 +29,7 @@ class HomeScreen extends StatelessWidget {
             : (weather?.normalizedDescription ?? 'Hava durumu hazır değil'));
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             HomeHeader(
               name: current?.username,
@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                padding: const EdgeInsets.fromLTRB(BuKombinMetrics.pageHorizontalPadding, 18, BuKombinMetrics.pageHorizontalPadding, 24),
                 children: [
                   HomeSectionHeader(
                     title: 'Günün Kombini',
@@ -192,7 +192,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
       ),
     );
   }
